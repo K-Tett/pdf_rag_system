@@ -1,0 +1,251 @@
+# PDF RAG System Makefile
+# Convenience commands for development and deployment
+
+.PHONY: help setup dev-setup build test lint format clean start stop restart logs status health
+
+# Default target
+help:
+	@echo "PDF RAG System - Available Commands"
+	@echo "=================================="
+	@echo ""
+	@echo "🚀 Quick Start:"
+	@echo "  make start          - Start the system and open chat interface"
+	@echo "  make setup          - Complete system setup"
+	@echo "  make stop           - Stop all services"
+	@echo ""
+	@echo "📱 Access Points:"
+	@echo "  Chat Interface:     http://localhost:8501"
+	@echo "  API Documentation:  http://localhost:8000/docs"
+	@echo "  Health Check:       http://localhost:8000/health"
+	@echo ""
+	@echo "🔧 Development:"
+	@echo "  make test           - Run test suite"
+	@echo "  make lint           - Run code linting"
+	@echo "  make format         - Format code"
+	@echo ""
+	@echo "🩺 Monitoring:"
+	@echo "  make health         - Check system health"
+	@echo "  make logs           - View service logs"
+	@echo "  make status         - Show service status"
+	@echo ""
+	@echo "🧹 Maintenance:"
+	@echo "  make clean          - Clean temporary files"
+	@echo "  make reset          - Reset everything (destructive)"
+
+# =============================================================================
+# SETUP & INSTALLATION
+# =============================================================================
+
+setup:
+	@echo "🚀 Setting up PDF RAG System..."
+	chmod +x scripts/setup.sh
+	./scripts/setup.sh
+
+dev-setup:
+	@echo "🛠️ Setting up development environment..."
+	chmod +x scripts/setup.sh
+	./scripts/setup.sh --dev
+
+build:
+	@echo "🏗️ Building Docker images..."
+	docker-compose build
+
+# =============================================================================
+# DEVELOPMENT
+# =============================================================================
+
+test:
+	@echo "🧪 Running test suite..."
+	python -m pytest tests/ -v
+
+test-cov:
+	@echo "🧪 Running tests with coverage..."
+	python -m pytest tests/ -v --cov=src --cov-report=html --cov-report=term
+	@echo "📊 Coverage report generated in htmlcov/"
+
+lint:
+	@echo "🔍 Running code linting..."
+	python -m flake8 src/ tests/ --max-line-length=100 --extend-ignore=E203,W503
+	@echo "✅ Linting completed"
+
+format:
+	@echo "🎨 Formatting code..."
+	python -m black src/ tests/ frontend/
+	python -m isort src/ tests/ frontend/
+	@echo "✅ Code formatting completed"
+
+type-check:
+	@echo "🔎 Running type checking..."
+	python -m mypy src/ --ignore-missing-imports
+	@echo "✅ Type checking completed"
+
+# Combined code quality check
+quality: format lint type-check test
+	@echo "✅ All code quality checks completed"
+
+# =============================================================================
+# DOCKER OPERATIONS
+# =============================================================================
+
+start:
+	@echo "🚀 Starting PDF RAG System..."
+	docker-compose up -d
+	@echo "⏳ Waiting for services to be ready..."
+	@timeout 60 bash -c 'until curl -s http://localhost:8000/health > /dev/null; do sleep 2; done' || true
+	@echo ""
+	@echo "✅ System is ready!"
+	@echo ""
+	@echo "🎉 Open your browser and go to: http://localhost:8501"
+	@echo "📖 Or view API docs at: http://localhost:8000/docs"
+	@echo ""
+	@make status
+
+stop:
+	@echo "🛑 Stopping all services..."
+	docker-compose down
+
+restart:
+	@echo "🔄 Restarting all services..."
+	docker-compose restart
+	@make status
+
+logs:
+	@echo "📋 Viewing service logs (Ctrl+C to exit)..."
+	docker-compose logs -f
+
+status:
+	@echo "📊 Service Status:"
+	@docker-compose ps
+	@echo ""
+	@echo "🌐 Access Points:"
+	@echo "  Frontend:    http://localhost:8501"
+	@echo "  Backend API: http://localhost:8000"
+	@echo "  API Docs:    http://localhost:8000/docs"
+	@echo "  Qdrant:      http://localhost:6333"
+
+# =============================================================================
+# HEALTH & MONITORING
+# =============================================================================
+
+health:
+	@echo "🩺 Checking system health..."
+	@curl -s http://localhost:8000/health | python -m json.tool || echo "❌ Backend not accessible"
+
+health-detailed:
+	@echo "🩺 Detailed health check..."
+	@curl -s http://localhost:8000/health/detailed | python -m json.tool || echo "❌ Backend not accessible"
+
+# =============================================================================
+# DATA OPERATIONS
+# =============================================================================
+
+ingest:
+	@echo "📚 Ingesting sample documents..."
+	@if [ ! -f scripts/ingest.py ]; then \
+		echo "❌ Ingest script not found. Creating sample ingestion..."; \
+	else \
+		python scripts/ingest.py; \
+	fi
+
+eval:
+	@echo "📊 Running evaluation benchmark..."
+	@API_KEY=$$(grep "API_KEY=" .env | cut -d'=' -f2) && \
+	curl -X POST "http://localhost:8000/evaluation/benchmark?benchmark_name=basic" \
+		-H "Authorization: Bearer $$API_KEY" \
+		-H "Content-Type: application/json" | python -m json.tool
+
+# =============================================================================
+# CLEANUP
+# =============================================================================
+
+clean:
+	@echo "🧹 Cleaning temporary files..."
+	find . -type f -name "*.pyc" -delete
+	find . -type d -name "__pycache__" -delete
+	find . -type f -name "*.log" -delete
+	find . -type f -name ".coverage" -delete
+	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
+	@echo "✅ Cleanup completed"
+
+clean-docker:
+	@echo "🧹 Cleaning Docker resources..."
+	docker-compose down --volumes --remove-orphans
+	docker system prune -f
+	@echo "✅ Docker cleanup completed"
+
+reset: clean clean-docker
+	@echo "⚠️  Resetting everything (this will delete all data)..."
+	@read -p "Are you sure? This will delete all documents and data [y/N]: " confirm && \
+	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
+		rm -rf data/* logs/* || true; \
+		docker volume rm $$(docker volume ls -q | grep pdf-rag) 2>/dev/null || true; \
+		echo "✅ Reset completed"; \
+	else \
+		echo "❌ Reset cancelled"; \
+	fi
+
+# =============================================================================
+# UTILITY TARGETS
+# =============================================================================
+
+# Install development dependencies
+install-dev:
+	@echo "📦 Installing development dependencies..."
+	pip install -r requirements.txt
+	pip install -r requirements-frontend.txt
+	pip install pytest pytest-asyncio pytest-cov black isort flake8 mypy
+
+# Generate API documentation
+docs:
+	@echo "📚 Generating API documentation..."
+	@echo "Open http://localhost:8000/docs when services are running"
+
+# Pull latest Ollama models
+pull-models:
+	@echo "⬇️ Pulling latest Ollama models..."
+	docker exec ollama ollama pull mistral
+	@echo "✅ Models updated"
+
+# Backup data
+backup:
+	@echo "💾 Creating backup..."
+	@TIMESTAMP=$$(date +%Y%m%d_%H%M%S) && \
+	tar -czf backup_$$TIMESTAMP.tar.gz data/ config/ .env && \
+	echo "✅ Backup created: backup_$$TIMESTAMP.tar.gz"
+
+# Show environment info
+env-info:
+	@echo "🔧 Environment Information:"
+	@echo "Docker: $$(docker --version 2>/dev/null || echo 'Not installed')"
+	@echo "Docker Compose: $$(docker-compose --version 2>/dev/null || echo 'Not installed')"
+	@echo "Python: $$(python3 --version 2>/dev/null || echo 'Not installed')"
+	@echo "API Key: $$(grep "API_KEY=" .env 2>/dev/null | cut -d'=' -f2 | cut -c1-8)..."
+	@echo "Environment: $$(grep "ENVIRONMENT=" .env 2>/dev/null | cut -d'=' -f2)"
+
+# Show disk usage
+disk-usage:
+	@echo "💾 Disk Usage:"
+	@echo "Data directory: $$(du -sh data/ 2>/dev/null || echo '0B')"
+	@echo "Logs directory: $$(du -sh logs/ 2>/dev/null || echo '0B')"
+	@echo "Docker volumes: $$(docker system df 2>/dev/null || echo 'Docker not available')"
+
+# =============================================================================
+# CI/CD HELPERS
+# =============================================================================
+
+ci-test: format lint type-check test
+	@echo "✅ CI pipeline checks completed"
+
+ci-build:
+	@echo "🏗️ Building for CI..."
+	docker build -f Dockerfile.backend -t pdf-rag-backend:ci .
+	docker build -f Dockerfile.frontend -t pdf-rag-frontend:ci .
+
+# =============================================================================
+# VARIABLES
+# =============================================================================
+
+# Default shell
+SHELL := /bin/bash

@@ -1,0 +1,102 @@
+{
+  "dataset_name": "PDF RAG Basic Evaluation",
+  "description": "Sample evaluation dataset for testing the PDF RAG system with academic paper questions",
+  "version": "1.0",
+  "created_date": "2024-01-15",
+  "evaluation_pairs": [
+    {
+      "question": "What is retrieval-augmented generation?",
+      "expected_answer": "Retrieval-augmented generation (RAG) is a technique that combines information retrieval with text generation to improve the factual accuracy and relevance of generated responses by incorporating external knowledge sources.",
+      "context": "Academic paper introduction to RAG concepts",
+      "difficulty": "basic",
+      "category": "definition"
+    },
+    {
+      "question": "How does hybrid search improve retrieval performance?",
+      "expected_answer": "Hybrid search improves retrieval performance by combining dense vector search (for semantic similarity) with sparse keyword search like BM25 (for exact keyword matching), leveraging the strengths of both approaches to achieve better overall retrieval accuracy.",
+      "context": "Information retrieval methodology",
+      "difficulty": "intermediate", 
+      "category": "methodology"
+    },
+    {
+      "question": "What are the main components of a RAG system?",
+      "expected_answer": "A RAG system typically consists of three main components: (1) a retrieval system for finding relevant documents, (2) a knowledge base containing external information, and (3) a generation model that incorporates the retrieved information into its responses.",
+      "context": "RAG system architecture",
+      "difficulty": "basic",
+      "category": "architecture"
+    },
+    {
+      "question": "What performance improvements does RAG achieve compared to standalone LLMs?",
+      "expected_answer": "RAG systems achieve 15-25% improvement in factual accuracy compared to standalone LLMs across various benchmarks, as they can access up-to-date and domain-specific information that wasn't in the original training data.",
+      "context": "Performance evaluation results",
+      "difficulty": "intermediate",
+      "category": "results"
+    },
+    {
+      "question": "Which prompting technique shows the best performance on reasoning tasks?",
+      "expected_answer": "Chain-of-thought prompting shows 20-30% improvement on reasoning tasks compared to standard prompting, as it encourages the model to break down complex problems into step-by-step reasoning processes.",
+      "context": "Prompt engineering study results",
+      "difficulty": "intermediate",
+      "category": "techniques"
+    },
+    {
+      "question": "What are the key advantages of few-shot learning in prompt engineering?",
+      "expected_answer": "Few-shot learning in prompt engineering provides task-specific examples that help guide the model's behavior, resulting in approximately 15% improvement in performance on average by demonstrating the desired input-output patterns.",
+      "context": "Prompt engineering techniques",
+      "difficulty": "basic",
+      "category": "techniques"
+    },
+    {
+      "question": "How much improvement does hybrid search achieve on MS MARCO dataset?",
+      "expected_answer": "The hybrid search approach achieves 12% improvement in MRR@10 and 8% improvement in Recall@100 on the MS MARCO dataset compared to using dense or sparse methods individually.",
+      "context": "Experimental results from hybrid search paper",
+      "difficulty": "advanced",
+      "category": "metrics"
+    },
+    {
+      "question": "What are the limitations of traditional keyword-based search?",
+      "expected_answer": "Traditional keyword-based search has limitations in understanding semantic meaning and context, often missing relevant documents that use different vocabulary or synonyms, and struggling with queries that require conceptual understanding rather than exact word matching.",
+      "context": "Information retrieval background",
+      "difficulty": "intermediate",
+      "category": "limitations"
+    },
+    {
+      "question": "Which applications benefit most from chain-of-thought prompting?",
+      "expected_answer": "Chain-of-thought prompting is particularly effective for mathematical reasoning, code generation, question answering, and text summarization tasks that require step-by-step logical reasoning processes.",
+      "context": "Prompting applications and use cases",
+      "difficulty": "basic",
+      "category": "applications"
+    },
+    {
+      "question": "What fusion techniques are used in hybrid search systems?",
+      "expected_answer": "Hybrid search systems use various fusion techniques to combine dense and sparse retrieval results, including weighted scoring methods, reciprocal rank fusion (RRF), and learned ranking functions that optimize the combination of different retrieval signals.",
+      "context": "Technical implementation details",
+      "difficulty": "advanced",
+      "category": "implementation"
+    }
+  ],
+  "evaluation_metrics": {
+    "primary_metrics": [
+      "rouge_l_f1",
+      "semantic_similarity",
+      "bert_score_f1"
+    ],
+    "secondary_metrics": [
+      "exact_match",
+      "has_specific_details", 
+      "has_citations",
+      "answer_length_ratio"
+    ]
+  },
+  "success_thresholds": {
+    "rouge_l_f1": 0.3,
+    "semantic_similarity": 0.7,
+    "bert_score_f1": 0.8,
+    "overall_pass_rate": 0.7
+  },
+  "usage_instructions": {
+    "api_usage": "POST /evaluation/dataset/upload with this JSON file",
+    "cli_usage": "python scripts/evaluate.py --dataset evaluation/sample_dataset.json",
+    "expected_runtime": "2-5 minutes depending on system performance"
+  }
+}

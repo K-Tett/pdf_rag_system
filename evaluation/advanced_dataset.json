@@ -1,0 +1,116 @@
+{
+    "dataset_name": "PDF RAG Advanced Evaluation",
+    "description": "Advanced evaluation dataset testing complex reasoning, multi-hop questions, and edge cases",
+    "version": "1.0",
+    "created_date": "2024-01-15",
+    "evaluation_pairs": [
+      {
+        "question": "Compare the performance improvements of RAG systems versus the gains from chain-of-thought prompting. Which approach provides better results for factual accuracy?",
+        "expected_answer": "RAG systems provide 15-25% improvement in factual accuracy, while chain-of-thought prompting shows 20-30% improvement on reasoning tasks. For pure factual accuracy, RAG systems are more effective as they access external knowledge, while chain-of-thought is better for reasoning processes. The optimal approach would combine both techniques.",
+        "context": "Multi-paper comparison requiring synthesis",
+        "difficulty": "advanced",
+        "category": "comparative_analysis"
+      },
+      {
+        "question": "If a hybrid search system achieves 12% improvement in MRR@10 on MS MARCO, and RAG systems show 15-25% improvement in factual accuracy, what would be the expected compound improvement of a RAG system using hybrid search?",
+        "expected_answer": "The compound improvement would likely be multiplicative rather than additive. Assuming a conservative 15% RAG improvement and 12% hybrid search improvement, the combined system could achieve approximately 28-30% improvement over baseline ((1.15 × 1.12) - 1 ≈ 0.288). However, the actual improvement depends on the specific evaluation metrics and potential interaction effects.",
+        "context": "Mathematical reasoning with multiple papers",
+        "difficulty": "expert",
+        "category": "quantitative_reasoning"
+      },
+      {
+        "question": "What are the trade-offs between using larger chunk sizes versus smaller chunk sizes in document processing for RAG systems?",
+        "expected_answer": "Larger chunks provide more context and coherent information but may include irrelevant content and reduce retrieval precision. Smaller chunks offer more precise retrieval and better granularity but risk losing important context and may fragment related information. The optimal chunk size depends on document type, query complexity, and the balance between precision and context preservation.",
+        "context": "Document processing methodology",
+        "difficulty": "advanced",
+        "category": "system_design"
+      },
+      {
+        "question": "How would the performance characteristics differ between a RAG system optimized for academic papers versus one optimized for news articles?",
+        "expected_answer": "An academic paper RAG system would prioritize longer context windows, citation tracking, technical terminology handling, and deeper semantic understanding for complex concepts. A news RAG system would emphasize recency, factual accuracy, entity recognition, and rapid processing of shorter, time-sensitive content. The chunking strategies, retrieval weights, and evaluation metrics would differ significantly between these use cases.",
+        "context": "Domain-specific system design",
+        "difficulty": "expert",
+        "category": "domain_adaptation"
+      },
+      {
+        "question": "What potential failure modes should be considered when deploying a RAG system in production?",
+        "expected_answer": "Key failure modes include: (1) retrieval failures due to poor document quality or embedding misalignment, (2) generation hallucination despite retrieved context, (3) latency issues from complex retrieval pipelines, (4) context window limitations with large documents, (5) inconsistent performance across different query types, (6) security vulnerabilities from prompt injection, and (7) scalability challenges with large document collections. Mitigation strategies include robust evaluation, fallback mechanisms, and continuous monitoring.",
+        "context": "Production deployment considerations",
+        "difficulty": "expert",
+        "category": "reliability_engineering"
+      },
+      {
+        "question": "Explain the relationship between embedding dimensionality, retrieval performance, and computational cost in vector search systems.",
+        "expected_answer": "Higher embedding dimensionality typically improves semantic representation quality and retrieval performance by capturing more nuanced relationships. However, it increases computational cost quadratically for distance calculations, storage requirements, and index building time. The relationship follows a diminishing returns curve where performance gains plateau while costs continue rising. Optimal dimensionality balances performance requirements with resource constraints, typically ranging from 384-1536 dimensions for most applications.",
+        "context": "Vector search optimization",
+        "difficulty": "advanced",
+        "category": "performance_optimization"
+      },
+      {
+        "question": "How would you design an evaluation framework to detect when a RAG system is hallucinating despite having relevant documents in the retrieval set?",
+        "expected_answer": "The evaluation framework should include: (1) faithfulness metrics comparing generated text to retrieved documents, (2) citation accuracy checking for factual claims, (3) consistency testing with multiple retrievals of the same information, (4) adversarial examples with misleading but relevant documents, (5) human evaluation for complex cases, and (6) automated fact-checking against known ground truth. The framework should distinguish between missing information (acceptable) and contradictory information (hallucination).",
+        "context": "Evaluation methodology design",
+        "difficulty": "expert",
+        "category": "evaluation_design"
+      },
+      {
+        "question": "What are the privacy and security implications of using external web search in a RAG system, and how can they be mitigated?",
+        "expected_answer": "Privacy risks include exposing user queries to search APIs, potential data leakage through search logs, and information disclosure about internal document contents. Security risks include prompt injection through malicious web content, data poisoning from unreliable sources, and dependency on external services. Mitigation strategies include query anonymization, content filtering, source verification, rate limiting, secure API practices, and fallback to internal knowledge when external search fails.",
+        "context": "Security and privacy considerations",
+        "difficulty": "expert",
+        "category": "security_analysis"
+      },
+      {
+        "question": "Analyze the scalability bottlenecks in a multi-tenant RAG system serving 1000+ concurrent users with individual document collections.",
+        "expected_answer": "Key bottlenecks include: (1) vector database scaling for millions of embeddings across tenants, (2) embedding generation pipeline throughput, (3) LLM inference capacity and queuing, (4) memory requirements for tenant isolation, (5) storage I/O for document retrieval, and (6) network bandwidth for large context windows. Solutions include horizontal sharding, caching strategies, async processing, resource pooling, and tenant-aware optimization. Cost per query and resource allocation become critical factors at scale.",
+        "context": "Scalability engineering",
+        "difficulty": "expert",
+        "category": "scalability_analysis"
+      },
+      {
+        "question": "Design a testing strategy for validating that a RAG system correctly handles ambiguous queries that could refer to multiple documents or concepts.",
+        "expected_answer": "The testing strategy should include: (1) ambiguous query datasets with multiple valid interpretations, (2) clarification dialog testing to verify the system requests more specific information, (3) multi-document synthesis evaluation for queries spanning several sources, (4) confidence scoring validation for uncertain responses, (5) user intent classification accuracy, and (6) graceful degradation testing when disambiguation fails. Success metrics should measure both accuracy and user experience in ambiguous scenarios.",
+        "context": "Quality assurance methodology",
+        "difficulty": "advanced",
+        "category": "testing_strategy"
+      }
+    ],
+    "evaluation_metrics": {
+      "primary_metrics": [
+        "rouge_l_f1",
+        "semantic_similarity", 
+        "bert_score_f1",
+        "factual_consistency"
+      ],
+      "reasoning_metrics": [
+        "logical_coherence",
+        "multi_hop_accuracy",
+        "quantitative_reasoning",
+        "comparative_analysis"
+      ],
+      "robustness_metrics": [
+        "ambiguity_handling",
+        "edge_case_performance",
+        "failure_mode_detection",
+        "confidence_calibration"
+      ]
+    },
+    "success_thresholds": {
+      "rouge_l_f1": 0.25,
+      "semantic_similarity": 0.65,
+      "bert_score_f1": 0.75,
+      "logical_coherence": 0.7,
+      "overall_pass_rate": 0.6
+    },
+    "difficulty_distribution": {
+      "advanced": 7,
+      "expert": 3,
+      "total": 10
+    },
+    "usage_instructions": {
+      "api_usage": "POST /evaluation/dataset/upload with this JSON file",
+      "recommended_model": "Use with high-capability models (GPT-4, Claude-3, etc.)",
+      "expected_runtime": "5-15 minutes depending on model and complexity",
+      "interpretation": "Lower success rates expected due to advanced difficulty. Focus on reasoning quality over exact matches."
+    }
+  }

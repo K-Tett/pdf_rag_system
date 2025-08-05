@@ -1,0 +1,78 @@
+{
+  "doc_aefd770eaf8e": {
+    "id": "doc_aefd770eaf8e",
+    "filename": "Chang and Fosler-Lussier - 2023 - How to Prompt LLMs for Text-to-SQL A Study in Zer.pdf",
+    "title": "How to Prompt LLMs for Text-to-SQL: A Study in Zero-shot,",
+    "author": "The Ohio State",
+    "upload_date": "2025-08-03T18:27:37.431055",
+    "processing_status": "completed",
+    "file_path": "data/Chang and Fosler-Lussier - 2023 - How to Prompt LLMs for Text-to-SQL A Study in Zer.pdf",
+    "metadata": {
+      "filename": "Chang and Fosler-Lussier - 2023 - How to Prompt LLMs for Text-to-SQL A Study in Zer.pdf",
+      "file_size": 487305,
+      "processed_at": "2025-08-03T18:27:37.431025",
+      "text_length": 55166,
+      "estimated_pages": 18,
+      "title": "How to Prompt LLMs for Text-to-SQL: A Study in Zero-shot,",
+      "author": "The Ohio State"
+    },
+    "num_chunks": 113,
+    "processed_at": "2025-08-03T18:27:47.515729"
+  },
+  "doc_2c206772fed9": {
+    "id": "doc_2c206772fed9",
+    "filename": "Katsogiannis-Meimarakis and Koutrika - 2023 - A survey on deep learning approaches for text-to-S.pdf",
+    "title": "The VLDB Journal (2023) 32:905\u2013936",
+    "author": null,
+    "upload_date": "2025-08-03T18:27:50.063866",
+    "processing_status": "completed",
+    "file_path": "data/Katsogiannis-Meimarakis and Koutrika - 2023 - A survey on deep learning approaches for text-to-S.pdf",
+    "metadata": {
+      "filename": "Katsogiannis-Meimarakis and Koutrika - 2023 - A survey on deep learning approaches for text-to-S.pdf",
+      "file_size": 1548866,
+      "processed_at": "2025-08-03T18:27:50.063811",
+      "text_length": 172652,
+      "estimated_pages": 57,
+      "title": "The VLDB Journal (2023) 32:905\u2013936"
+    },
+    "num_chunks": 391,
+    "processed_at": "2025-08-03T18:28:20.160479"
+  },
+  "doc_8df23c837016": {
+    "id": "doc_8df23c837016",
+    "filename": "Rajkumar et al. - 2022 - Evaluating the Text-to-SQL Capabilities of Large L.pdf",
+    "title": "Evaluating the Text-to-SQL Capabilities of Large Language Models",
+    "author": null,
+    "upload_date": "2025-08-03T18:28:20.785346",
+    "processing_status": "completed",
+    "file_path": "data/Rajkumar et al. - 2022 - Evaluating the Text-to-SQL Capabilities of Large L.pdf",
+    "metadata": {
+      "filename": "Rajkumar et al. - 2022 - Evaluating the Text-to-SQL Capabilities of Large L.pdf",
+      "file_size": 352887,
+      "processed_at": "2025-08-03T18:28:20.785304",
+      "text_length": 40778,
+      "estimated_pages": 13,
+      "title": "Evaluating the Text-to-SQL Capabilities of Large Language Models"
+    },
+    "num_chunks": 80,
+    "processed_at": "2025-08-03T18:28:30.396400"
+  },
+  "doc_d9d6833c3455": {
+    "id": "doc_d9d6833c3455",
+    "filename": "Zhang et al. - 2024 - Benchmarking the Text-to-SQL Capability of Large L.pdf",
+    "title": "Zhang et al. - 2024 - Benchmarking the Text-to-SQL Capability of Large L.pdf",
+    "author": null,
+    "upload_date": "2025-08-03T18:28:31.524894",
+    "processing_status": "completed",
+    "file_path": "data/Zhang et al. - 2024 - Benchmarking the Text-to-SQL Capability of Large L.pdf",
+    "metadata": {
+      "filename": "Zhang et al. - 2024 - Benchmarking the Text-to-SQL Capability of Large L.pdf",
+      "file_size": 3391399,
+      "processed_at": "2025-08-03T18:28:31.524856",
+      "text_length": 78632,
+      "estimated_pages": 26
+    },
+    "num_chunks": 175,
+    "processed_at": "2025-08-03T18:28:48.779242"
+  }
+}

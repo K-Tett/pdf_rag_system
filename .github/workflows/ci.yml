@@ -1,0 +1,315 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  PYTHON_VERSION: "3.11"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      qdrant:
+        image: qdrant/qdrant:latest
+        ports:
+          - 6333:6333
+        options: >-
+          --health-cmd "curl -f http://localhost:6333/health"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential curl
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio pytest-cov
+    
+    - name: Create test directories
+      run: |
+        mkdir -p data logs
+    
+    - name: Run code quality checks
+      run: |
+        # Type checking
+        python -m mypy src --ignore-missing-imports || true
+        
+        # Code formatting check
+        python -m black --check src || true
+        
+        # Import sorting check
+        python -m isort --check-only src || true
+        
+        # Linting
+        python -m flake8 src --max-line-length=100 --extend-ignore=E203,W503 || true
+    
+    - name: Wait for Qdrant to be ready
+      run: |
+        timeout 30 bash -c 'until curl -f http://localhost:6333/health; do sleep 1; done'
+    
+    - name: Run unit tests
+      env:
+        QDRANT_URL: http://localhost:6333
+        API_KEY: test-api-key
+        ENVIRONMENT: test
+      run: |
+        python -m pytest tests/ -v --cov=src --cov-report=xml --cov-report=html
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      if: github.ref == 'refs/heads/main'
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
+
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install black isort flake8 mypy
+        pip install -r requirements.txt
+    
+    - name: Run Black (formatting)
+      run: python -m black --check src
+      continue-on-error: true
+    
+    - name: Run isort (import sorting)
+      run: python -m isort --check-only src
+      continue-on-error: true
+    
+    - name: Run flake8 (linting)
+      run: python -m flake8 src --max-line-length=100 --extend-ignore=E203,W503
+      continue-on-error: true
+    
+    - name: Run mypy (type checking)
+      run: python -m mypy src --ignore-missing-imports
+      continue-on-error: true
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install safety
+      run: pip install safety bandit
+    
+    - name: Run safety (dependency vulnerability scan)
+      run: |
+        pip install -r requirements.txt
+        safety check --json || true
+    
+    - name: Run bandit (security linting)
+      run: bandit -r src -f json || true
+
+  build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Log in to Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Extract metadata (tags, labels)
+      id: meta-backend
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+    
+    - name: Build and push backend image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.backend
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta-backend.outputs.tags }}
+        labels: ${{ steps.meta-backend.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Extract metadata for frontend
+      id: meta-frontend
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+    
+    - name: Build and push frontend image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.frontend
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta-frontend.outputs.tags }}
+        labels: ${{ steps.meta-frontend.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Compose
+      run: |
+        docker-compose --version
+    
+    - name: Create test environment file
+      run: |
+        cat > .env << EOF
+        OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+        API_KEY=test-integration-key
+        ENVIRONMENT=test
+        EOF
+    
+    - name: Start services
+      run: |
+        docker-compose up -d qdrant
+        sleep 10
+        
+        # Start backend without Ollama for faster testing
+        docker-compose up -d backend
+        sleep 30
+    
+    - name: Wait for services
+      run: |
+        timeout 60 bash -c 'until curl -f http://localhost:8000/health; do sleep 2; done'
+    
+    - name: Run integration tests
+      run: |
+        # Simple integration test
+        curl -H "Authorization: Bearer test-integration-key" \
+             -H "Content-Type: application/json" \
+             http://localhost:8000/health | jq .
+        
+        # Test document listing
+        curl -H "Authorization: Bearer test-integration-key" \
+             http://localhost:8000/documents/ | jq .
+    
+    - name: Cleanup
+      if: always()
+      run: |
+        docker-compose down -v
+
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [test, lint, build, integration-test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Deploy notification
+      run: |
+        echo "🚀 Deploying to production..."
+        echo "Image tags:"
+        echo "- Backend: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest"
+        echo "- Frontend: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest"
+    
+    # Add your deployment steps here
+    # Examples:
+    # - Deploy to Kubernetes
+    # - Deploy to cloud provider
+    # - Update docker-compose on server
+    # - Trigger deployment webhook
+    
+    - name: Deployment placeholder
+      run: |
+        echo "Add your deployment steps here"
+        echo "This could include:"
+        echo "- Updating Kubernetes manifests"
+        echo "- Deploying to cloud services"
+        echo "- Running database migrations"
+        echo "- Health checks after deployment"
+
+  notification:
+    name: Notify Results
+    runs-on: ubuntu-latest
+    needs: [test, lint, build]
+    if: always()
+    
+    steps:
+    - name: Notify success
+      if: ${{ needs.test.result == 'success' && needs.lint.result == 'success' && needs.build.result == 'success' }}
+      run: |
+        echo "✅ All checks passed!"
+    
+    - name: Notify failure
+      if: ${{ needs.test.result == 'failure' || needs.lint.result == 'failure' || needs.build.result == 'failure' }}
+      run: |
+        echo "❌ Some checks failed!"
+        echo "Test result: ${{ needs.test.result }}"
+        echo "Lint result: ${{ needs.lint.result }}"
+        echo "Build result: ${{ needs.build.result }}"
